@@ -65,6 +65,77 @@ namespace StarChart.Controllers
             return Ok(result);
         }
 
+        [HttpPost]
+        public IActionResult Create([FromBody]CelestialObject celestialObject)
+        {
+            _context.CelestialObjects.Add(celestialObject);
+            _context.SaveChanges();
+
+            return CreatedAtRoute("GetById", new
+            {
+                id = celestialObject.Id
+            },
+            celestialObject);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, CelestialObject celestialObject)
+        {
+            // Make sure the object already exists.
+            var result = _context.CelestialObjects.Find(id);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            // Object was found, so update the properties.
+            result.Name = celestialObject.Name;
+            result.OrbitalPeriod = celestialObject.OrbitalPeriod;
+            result.OrbitedObjectId = celestialObject.OrbitedObjectId;
+
+            _context.CelestialObjects.Update(result);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/{name}")]
+        public IActionResult RenameObject(int id, string name)
+        {
+            var result = _context.CelestialObjects.Find(id);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            // Object exists so rename it.
+            result.Name = name;
+
+            _context.CelestialObjects.Update(result);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var objsToDelete = _context.CelestialObjects.Where(s => s.Id == id || s.OrbitedObjectId == id).ToList();
+
+            if (objsToDelete == null || objsToDelete.Count == 0)
+            {
+                return NotFound();
+            }
+
+            // Delete the objects that where found with the given id.
+            _context.CelestialObjects.RemoveRange(objsToDelete);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
+
         private void LoadSatellites(CelestialObject celestialObject)
         {
             celestialObject.Satellites = _context.CelestialObjects.Where(s => s.OrbitedObjectId == celestialObject.Id).ToList();
